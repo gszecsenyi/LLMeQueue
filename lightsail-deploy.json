@@ -8,8 +8,9 @@
       },
       "environment": {
         "AUTH_TOKEN": "your-secret-token",
-        "DB_PATH": "data/embedding_queue.db",
-        "EMBEDDING_MODEL": "nomic-embed-text"
+        "DB_PATH": "data/llmequeue.db",
+        "EMBEDDING_MODEL": "nomic-embed-text",
+        "CHAT_MODEL": "llama3.1:8b"
       }
     }
   },

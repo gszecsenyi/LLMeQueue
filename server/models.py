@@ -2,6 +2,8 @@ from pydantic import BaseModel
 from typing import Optional, List
 
 
+# Embedding models
+
 class EmbeddingData(BaseModel):
     object: str = "embedding"
     embedding: List[float]
@@ -17,7 +19,42 @@ class OpenAIEmbeddingResponse(BaseModel):
 class OpenAIEmbeddingRequest(BaseModel):
     input: str  # text to embed
     model: Optional[str] = None  # optional, uses server default
-    wait_seconds: Optional[int] = 10  # extension: async support (default 10s)
+
+
+# Chat completion models
+
+class ChatMessage(BaseModel):
+    role: str  # "system", "user", "assistant"
+    content: str
+
+
+class ChatCompletionRequest(BaseModel):
+    model: Optional[str] = None
+    messages: List[ChatMessage]
+    temperature: Optional[float] = 0.7
+    max_tokens: Optional[int] = None
+    stream: Optional[bool] = False
+
+
+class ChatChoice(BaseModel):
+    index: int = 0
+    message: ChatMessage
+    finish_reason: str = "stop"
+
+
+class ChatUsage(BaseModel):
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+
+
+class ChatCompletionResponse(BaseModel):
+    id: str
+    object: str = "chat.completion"
+    created: int
+    model: str
+    choices: List[ChatChoice]
+    usage: ChatUsage = ChatUsage()
 
 
 class TaskResponse(BaseModel):

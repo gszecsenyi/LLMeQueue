@@ -1,2 +1,4 @@
 /data/
 ..gitignore.un~
+.github/
+CLAUDE.md

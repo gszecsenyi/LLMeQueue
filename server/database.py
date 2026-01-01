@@ -1,143 +1,144 @@
+import aiosqlite
 import sqlite3
 import uuid
 import json
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from contextlib import contextmanager
+import asyncio
 
 from config import DB_PATH
 
 
-def init_db():
+_db_pool = None
+_cleanup_task = None
+
+
+async def init_db():
     """Initialize the database and create tables if they don't exist."""
     Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
 
-    with get_connection() as conn:
-        conn.execute("""
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("""
             CREATE TABLE IF NOT EXISTS tasks (
                 id TEXT PRIMARY KEY,
-                text TEXT NOT NULL,
+                task_type TEXT DEFAULT 'embedding',
+                payload TEXT NOT NULL,
                 status TEXT DEFAULT 'pending',
-                embedding TEXT,
+                result TEXT,
                 error TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)")
-        conn.commit()
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)")
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON tasks(created_at)")
+        await db.commit()
 
 
-@contextmanager
-def get_connection():
-    """Context manager for database connections."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    try:
-        yield conn
-    finally:
-        conn.close()
-
-
-def cleanup_old_tasks() -> int:
+async def cleanup_old_tasks() -> int:
     """Delete tasks older than 1 hour. Returns number of deleted tasks."""
-    with get_connection() as conn:
-        result = conn.execute(
+    async with aiosqlite.connect(DB_PATH) as conn:
+        cursor = await conn.execute(
             "DELETE FROM tasks WHERE created_at < datetime('now', '-1 hour')"
         )
-        conn.commit()
-        return result.rowcount
+        await conn.commit()
+        return cursor.rowcount
 
 
-def create_task(text: str) -> str:
-    """Create a new task and return its ID. Also cleans up old tasks."""
-    # Cleanup old tasks (older than 1 hour)
-    cleanup_old_tasks()
-
+async def create_task(task_type: str, payload: dict) -> str:
+    """Create a new task and return its ID."""
     task_id = str(uuid.uuid4())
-    with get_connection() as conn:
-        conn.execute(
-            "INSERT INTO tasks (id, text) VALUES (?, ?)",
-            (task_id, text)
+    async with aiosqlite.connect(DB_PATH) as conn:
+        await conn.execute(
+            "INSERT INTO tasks (id, task_type, payload) VALUES (?, ?, ?)",
+            (task_id, task_type, json.dumps(payload))
         )
-        conn.commit()
+        await conn.commit()
     return task_id
 
 
-def get_task(task_id: str) -> Optional[dict]:
+async def get_task(task_id: str) -> Optional[dict]:
     """Get a task by ID."""
-    with get_connection() as conn:
-        row = conn.execute(
+    async with aiosqlite.connect(DB_PATH) as conn:
+        conn.row_factory = aiosqlite.Row
+        cursor = await conn.execute(
             "SELECT * FROM tasks WHERE id = ?",
             (task_id,)
-        ).fetchone()
+        )
+        row = await cursor.fetchone()
         if row:
             return dict(row)
     return None
 
 
-def claim_next_task() -> Optional[dict]:
+async def claim_next_task() -> Optional[dict]:
     """Atomically claim the next pending task for processing.
 
     Uses conditional UPDATE to prevent race conditions - if another worker
     claims the task between SELECT and UPDATE, rowcount will be 0.
     """
-    with get_connection() as conn:
+    async with aiosqlite.connect(DB_PATH) as conn:
         # Find a pending task
-        row = conn.execute(
-            "SELECT id, text FROM tasks WHERE status = 'pending' ORDER BY created_at LIMIT 1"
-        ).fetchone()
+        cursor = await conn.execute(
+            "SELECT id, task_type, payload FROM tasks WHERE status = 'pending' ORDER BY created_at LIMIT 1"
+        )
+        row = await cursor.fetchone()
 
         if not row:
             return None
 
         # Atomically claim ONLY if still pending (prevents race condition)
-        result = conn.execute(
+        cursor = await conn.execute(
             "UPDATE tasks SET status = 'processing', updated_at = ? WHERE id = ? AND status = 'pending'",
-            (datetime.utcnow().isoformat(), row["id"])
+            (datetime.utcnow().isoformat(), row[0])
         )
-        conn.commit()
+        await conn.commit()
 
         # If rowcount is 0, another worker claimed it first
-        if result.rowcount == 0:
+        if cursor.rowcount == 0:
             return None
 
-        return {"id": row["id"], "text": row["text"], "status": "processing"}
+        return {
+            "id": row[0],
+            "task_type": row[1],
+            "payload": json.loads(row[2]),
+            "status": "processing"
+        }
 
 
-def complete_task(task_id: str, embedding: list[float]) -> bool:
-    """Mark a task as completed with its embedding result."""
-    with get_connection() as conn:
-        result = conn.execute(
+async def complete_task(task_id: str, result_data: any) -> bool:
+    """Mark a task as completed with its result."""
+    async with aiosqlite.connect(DB_PATH) as conn:
+        cursor = await conn.execute(
             """UPDATE tasks
-               SET status = 'completed', embedding = ?, updated_at = ?
+               SET status = 'completed', result = ?, updated_at = ?
                WHERE id = ? AND status = 'processing'""",
-            (json.dumps(embedding), datetime.utcnow().isoformat(), task_id)
+            (json.dumps(result_data), datetime.utcnow().isoformat(), task_id)
         )
-        conn.commit()
-        return result.rowcount > 0
+        await conn.commit()
+        return cursor.rowcount > 0
 
 
-def fail_task(task_id: str, error: str) -> bool:
+async def fail_task(task_id: str, error: str) -> bool:
     """Mark a task as failed with an error message."""
-    with get_connection() as conn:
-        result = conn.execute(
+    async with aiosqlite.connect(DB_PATH) as conn:
+        cursor = await conn.execute(
             """UPDATE tasks
                SET status = 'failed', error = ?, updated_at = ?
                WHERE id = ? AND status = 'processing'""",
             (error, datetime.utcnow().isoformat(), task_id)
         )
-        conn.commit()
-        return result.rowcount > 0
+        await conn.commit()
+        return cursor.rowcount > 0
 
 
-def delete_task(task_id: str) -> bool:
+async def delete_task(task_id: str) -> bool:
     """Delete a task from the database."""
-    with get_connection() as conn:
-        result = conn.execute(
+    async with aiosqlite.connect(DB_PATH) as conn:
+        cursor = await conn.execute(
             "DELETE FROM tasks WHERE id = ?",
             (task_id,)
         )
-        conn.commit()
-        return result.rowcount > 0
+        await conn.commit()
+        return cursor.rowcount > 0
