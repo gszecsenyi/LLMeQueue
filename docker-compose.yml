@@ -1,0 +1,45 @@
+services:
+  server:
+    build: ./server
+    ports:
+      - "${SERVER_PORT:-8000}:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - AUTH_TOKEN=${AUTH_TOKEN:-your-secret-token}
+      - DB_PATH=${DB_PATH:-data/embedding_queue.db}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build: ./worker
+    environment:
+      - SERVER_URL=http://server:8000
+      - OLLAMA_URL=http://ollama:11434
+      - AUTH_TOKEN=${AUTH_TOKEN:-your-secret-token}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text}
+      - POLL_INTERVAL=${POLL_INTERVAL:-2}
+    depends_on:
+      server:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+
+  ollama:
+    image: ollama/ollama
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  ollama_data:

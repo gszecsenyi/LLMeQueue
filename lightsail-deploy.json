@@ -1,0 +1,27 @@
+{
+  "serviceName": "llmequeue",
+  "containers": {
+    "server": {
+      "image": "llmequeue-server",
+      "ports": {
+        "8000": "HTTP"
+      },
+      "environment": {
+        "AUTH_TOKEN": "your-secret-token",
+        "DB_PATH": "data/embedding_queue.db",
+        "EMBEDDING_MODEL": "nomic-embed-text"
+      }
+    }
+  },
+  "publicEndpoint": {
+    "containerName": "server",
+    "containerPort": 8000,
+    "healthCheck": {
+      "path": "/health",
+      "intervalSeconds": 30,
+      "timeoutSeconds": 5,
+      "healthyThreshold": 2,
+      "unhealthyThreshold": 2
+    }
+  }
+}
