@@ -1,5 +1,6 @@
 import time
 import requests
+from typing import Any
 from config import SERVER_URL, AUTH_TOKEN, POLL_INTERVAL, MAX_POLL_INTERVAL
 from embedder import get_embedding
 from chat import get_chat_completion
@@ -21,7 +22,7 @@ def claim_next_task():
     return data.get("task")
 
 
-def complete_task(task_id: str, result: any):
+def complete_task(task_id: str, result: Any):
     """Submit completed result to the server."""
     response = requests.post(
         f"{SERVER_URL}/worker/complete/{task_id}",
@@ -45,7 +46,9 @@ def fail_task(task_id: str, error: str):
 
 def process_embedding_task(task_id: str, payload: dict):
     """Process an embedding task."""
-    text = payload["text"]
+    text = payload.get("text")
+    if not isinstance(text, str):
+        raise ValueError("Embedding task payload must include a 'text' field of type string.")
     model = payload.get("model")
     print(f"[embedding] {task_id}: {text[:50]}...")
 
@@ -56,7 +59,9 @@ def process_embedding_task(task_id: str, payload: dict):
 
 def process_chat_task(task_id: str, payload: dict):
     """Process a chat completion task."""
-    messages = payload["messages"]
+    messages = payload.get("messages")
+    if messages is None:
+        raise ValueError("Chat task payload missing 'messages' field")
     model = payload.get("model")
     temperature = payload.get("temperature", 0.7)
     max_tokens = payload.get("max_tokens")

@@ -56,5 +56,10 @@ class ChatCompletionResponse(BaseModel):
     choices: List[ChatChoice]
     usage: ChatUsage = ChatUsage()
 
+
+class WorkerCompleteRequest(BaseModel):
+    result: dict  # Generic result field for any task type
+
+
 class WorkerFailRequest(BaseModel):
     error: str
