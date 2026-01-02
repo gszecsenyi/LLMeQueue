@@ -22,7 +22,13 @@ def get_chat_completion(messages: list[dict], model: str = None, temperature: fl
     )
     response.raise_for_status()
     data = response.json()
+    
+    try:
+        content = data["message"]["content"]
+    except (KeyError, TypeError) as exc:
+        raise ValueError(f"Malformed Ollama API response: expected 'message.content' field, got: {data!r}") from exc
+    
     return {
-        "content": data["message"]["content"],
-        "finish_reason": "stop" if data.get("done") else "length"
+        "content": content,
+        "finish_reason": "length" if not data.get("done") else "stop"
     }

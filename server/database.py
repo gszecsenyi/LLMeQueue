@@ -1,10 +1,9 @@
 import aiosqlite
-import sqlite3
 import uuid
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 
 from config import DB_PATH
 
@@ -99,7 +98,7 @@ async def claim_next_task() -> Optional[dict]:
         }
 
 
-async def complete_task(task_id: str, result_data: any) -> bool:
+async def complete_task(task_id: str, result_data: Any) -> bool:
     """Mark a task as completed with its result."""
     async with aiosqlite.connect(DB_PATH) as conn:
         cursor = await conn.execute(

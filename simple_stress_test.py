@@ -27,10 +27,12 @@ async def submit_request(session, url, headers, task_num, task_type="embedding")
         }
     
     try:
+        # Use a longer timeout for chat completions to match the server's 180s wait time
+        request_timeout = 185 if task_type == "chat" else 120
         async with session.post(url, 
             json=payload,
             headers=headers,
-            timeout=180) as resp:
+            timeout=request_timeout) as resp:
             elapsed = time.time() - start
             data = await resp.json()
             if resp.status == 200:
@@ -97,10 +99,10 @@ async def run_test(url, token, num_requests, concurrency, task_type="embedding")
     
     if task_type == "embedding":
         endpoint = "/v1/embeddings"
-        wait_desc = "(30s wait)"
+        wait_desc = "(120s timeout)"
     else:
         endpoint = "/v1/chat/completions"
-        wait_desc = "(180s wait)"
+        wait_desc = "(185s timeout)"
     
     print(f"\n🔥 SIMPLE STRESS TEST - {task_type.upper()}")
     print(f"   Requests: {num_requests}")

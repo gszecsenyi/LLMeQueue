@@ -16,6 +16,7 @@ from models import (
     ChatCompletionResponse,
     ChatMessage,
     ChatChoice,
+    WorkerCompleteRequest,
 )
 
 
@@ -29,6 +30,7 @@ async def periodic_cleanup():
             await asyncio.sleep(600)  # Run every 10 minutes
             await database.cleanup_old_tasks()
         except asyncio.CancelledError:
+            # Task was cancelled (e.g., during application shutdown); exit cleanly.
             break
         except Exception as e:
             print(f"Cleanup error: {e}")
@@ -43,6 +45,10 @@ async def lifespan(app: FastAPI):
     yield
     if cleanup_task:
         cleanup_task.cancel()
+        try:
+            await cleanup_task
+        except asyncio.CancelledError:
+            pass
 
 
 app = FastAPI(title="LLMeQueue API", lifespan=lifespan)
@@ -110,11 +116,11 @@ async def worker_claim_next(token: str = Depends(verify_token)):
 @app.post("/worker/complete/{task_id}")
 async def worker_complete(
     task_id: str,
-    request: dict,
+    request: WorkerCompleteRequest,
     token: str = Depends(verify_token),
 ):
     """Submit result for a task."""
-    result = request.get("result")
+    result = request.result
     if result is None:
         raise HTTPException(status_code=400, detail="Missing 'result' field")
     success = await database.complete_task(task_id, result)

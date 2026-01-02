@@ -132,7 +132,7 @@ print(response.choices[0].message.content)
 }
 ```
 
-The server waits up to 90 seconds for the result. If processing takes longer, it returns a task ID:
+The server waits up to 180 seconds (3 minutes) for the result. If processing takes longer, it returns a task ID:
 
 ```json
 {"id": "550e8400-e29b-41d4-a716-446655440000"}
