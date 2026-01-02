@@ -2,3 +2,9 @@
 ..gitignore.un~
 .github/
 CLAUDE.md
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
