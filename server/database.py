@@ -5,14 +5,8 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-import asyncio
 
 from config import DB_PATH
-
-
-_db_pool = None
-_cleanup_task = None
-
 
 async def init_db():
     """Initialize the database and create tables if they don't exist."""
@@ -45,7 +39,6 @@ async def cleanup_old_tasks() -> int:
         await conn.commit()
         return cursor.rowcount
 
-
 async def create_task(task_type: str, payload: dict) -> str:
     """Create a new task and return its ID."""
     task_id = str(uuid.uuid4())
@@ -56,7 +49,6 @@ async def create_task(task_type: str, payload: dict) -> str:
         )
         await conn.commit()
     return task_id
-
 
 async def get_task(task_id: str) -> Optional[dict]:
     """Get a task by ID."""

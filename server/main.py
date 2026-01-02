@@ -8,9 +8,6 @@ from typing import Union
 import database
 from config import AUTH_TOKEN, EMBEDDING_MODEL, CHAT_MODEL
 from models import (
-    TaskResponse,
-    TaskResult,
-    WorkerCompleteRequest,
     WorkerFailRequest,
     EmbeddingData,
     OpenAIEmbeddingResponse,
@@ -31,6 +28,8 @@ async def periodic_cleanup():
         try:
             await asyncio.sleep(600)  # Run every 10 minutes
             await database.cleanup_old_tasks()
+        except asyncio.CancelledError:
+            break
         except Exception as e:
             print(f"Cleanup error: {e}")
 

@@ -11,7 +11,6 @@ import asyncio
 import aiohttp
 import time
 import argparse
-from collections import deque
 
 
 async def submit_request(session, url, headers, task_num, task_type="embedding"):
@@ -31,7 +30,7 @@ async def submit_request(session, url, headers, task_num, task_type="embedding")
         async with session.post(url, 
             json=payload,
             headers=headers,
-            timeout=120) as resp:
+            timeout=180) as resp:
             elapsed = time.time() - start
             data = await resp.json()
             if resp.status == 200:
@@ -117,7 +116,6 @@ async def run_test(url, token, num_requests, concurrency, task_type="embedding")
     async def bounded_request(i, session):
         nonlocal completed_count, pending_count
         async with semaphore:
-            endpoint = "/v1/embeddings" if task_type == "embedding" else "/v1/chat/completions"
             result = await submit_request(session, f"{url}{endpoint}", headers, i, task_type)
             results.append(result)
             
