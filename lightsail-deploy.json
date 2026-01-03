@@ -2,14 +2,13 @@
   "serviceName": "llmequeue",
   "containers": {
     "server": {
-      "image": "llmequeue-server",
+      "image": ":llmequeue.server.3",
       "ports": {
         "8000": "HTTP"
       },
       "environment": {
         "AUTH_TOKEN": "your-secret-token",
-        "DB_PATH": "data/embedding_queue.db",
-        "EMBEDDING_MODEL": "nomic-embed-text"
+        "DB_PATH": "data/llmequeue.db"
       }
     }
   },

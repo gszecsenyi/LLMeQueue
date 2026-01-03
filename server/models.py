@@ -1,6 +1,8 @@
-from pydantic import BaseModel
-from typing import Optional, List
+from pydantic import BaseModel, Field
+from typing import Optional, List, Any, Union
 
+
+# Embedding models
 
 class EmbeddingData(BaseModel):
     object: str = "embedding"
@@ -16,27 +18,47 @@ class OpenAIEmbeddingResponse(BaseModel):
 
 class OpenAIEmbeddingRequest(BaseModel):
     input: str  # text to embed
-    model: Optional[str] = None  # optional, uses server default
-    wait_seconds: Optional[int] = 10  # extension: async support (default 10s)
+    model: str  # Remove default value
 
 
-class TaskResponse(BaseModel):
+# Chat completion models
+
+class ChatMessage(BaseModel):
+    role: str  # "system", "user", "assistant"
+    content: str
+
+
+class ChatCompletionRequest(BaseModel):
+    messages: List[ChatMessage]
+    model: str  # Remove default value
+    temperature: Optional[float] = Field(default=0.7, ge=0, le=2)
+    max_tokens: Optional[int] = Field(default=None, ge=1)
+    wait_seconds: int = Field(default=180, ge=0, le=300)
+
+
+class ChatChoice(BaseModel):
+    index: int = 0
+    message: ChatMessage
+    finish_reason: str = "stop"
+
+
+class ChatUsage(BaseModel):
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    total_tokens: int = 0
+
+
+class ChatCompletionResponse(BaseModel):
     id: str
-    text: str
-    status: str
-    embedding: Optional[list[float]] = None
-    error: Optional[str] = None
-    created_at: str
-    updated_at: str
-
-
-class TaskResult(BaseModel):
-    id: str
-    embedding: list[float]
+    object: str = "chat.completion"
+    created: int
+    model: str
+    choices: List[ChatChoice]
+    usage: ChatUsage = ChatUsage()
 
 
 class WorkerCompleteRequest(BaseModel):
-    embedding: list[float]
+    result: Any  # Generic result field for any task type (can be dict, list, etc.)
 
 
 class WorkerFailRequest(BaseModel):

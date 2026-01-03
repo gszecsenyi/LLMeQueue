@@ -1,0 +1,13 @@
+# For connecting local workers to cloud server
+# Run: docker compose -f docker-compose.cloud.yml up --scale worker=3
+
+services:
+  worker:
+    build: ./worker
+    environment:
+      - SERVER_URL=${SERVER_URL:-http://your-aws-server:8000}
+      - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
+      - AUTH_TOKEN=${AUTH_TOKEN:-default-secret-token}
+      - POLL_INTERVAL=${POLL_INTERVAL:-1}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text}
+      - CHAT_MODEL=${CHAT_MODEL:-llama3.2}
