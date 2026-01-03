@@ -5,9 +5,9 @@ services:
   worker:
     build: ./worker
     environment:
-      - SERVER_URL=https://llmequeue.45tq5tnag7z46.eu-central-1.cs.amazonlightsail.com
-      - OLLAMA_URL=http://host.docker.internal:11434
-      - AUTH_TOKEN=${AUTH_TOKEN:-your-secret-token}
+      - SERVER_URL=${SERVER_URL:-http://your-aws-server:8000}
+      - OLLAMA_URL=${OLLAMA_URL:-http://host.docker.internal:11434}
+      - AUTH_TOKEN=${AUTH_TOKEN:-default-secret-token}
+      - POLL_INTERVAL=${POLL_INTERVAL:-1}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL:-nomic-embed-text}
       - CHAT_MODEL=${CHAT_MODEL:-llama3.2}
-      - POLL_INTERVAL=${POLL_INTERVAL:-1}

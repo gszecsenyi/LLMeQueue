@@ -220,73 +220,32 @@ LLMeQueue/
 - `completed` - Embedding ready
 - `failed` - Error occurred (check `error` field)
 
-## AWS Lightsail Deployment
+## Deployment
 
-Deploy the server container to AWS Lightsail for cloud hosting.
+### Server (AWS)
 
-### 1. Install AWS CLI
-
-```bash
-pip install awscli
-aws configure
-```
-
-### 2. Create a Lightsail container service
+**Note:** The server no longer has default models. Clients must specify the `model` field in requests.
 
 ```bash
-aws lightsail create-container-service \
-  --service-name llmequeue \
-  --power small \
-  --scale 1
+# On AWS instance
+git clone https://github.com/yourusername/LLMeQueue.git
+cd LLMeQueue
+cp .env.example .env
+# Edit .env with your AUTH_TOKEN
+docker compose up -d --build
 ```
 
-### 3. Build and push the server image
+### Worker (Local GPU)
+
+Workers should specify default models via environment variables:
 
 ```bash
-# Build the server image
-docker build -t llmequeue-server ./server
+# Create .env file with your models
+echo "EMBEDDING_MODEL=nomic-embed-text" >> .env
+echo "CHAT_MODEL=llama3.2" >> .env
+echo "SERVER_URL=http://your-aws-ip:8000" >> .env
+echo "AUTH_TOKEN=your-secret-token" >> .env
 
-# Push to Lightsail
-aws lightsail push-container-image \
-  --service-name llmequeue \
-  --label server \
-  --image llmequeue-server
+# Deploy worker
+docker compose -f docker-compose.cloud.yml up -d --build
 ```
-
-### 4. Deploy the container
-
-Update `lightsail-deploy.json` with the image name from step 3, then:
-
-```bash
-aws lightsail create-container-service-deployment \
-  --service-name llmequeue \
-  --cli-input-json file://lightsail-deploy.json
-```
-
-### 5. Get the public URL
-
-```bash
-aws lightsail get-container-services --service-name llmequeue
-```
-
-The URL will be in the format: `https://llmequeue.xxxxx.us-east-1.cs.amazonlightsail.com`
-
-### 6. Run the worker locally
-
-Point your local worker to the Lightsail server:
-
-```bash
-SERVER_URL=https://llmequeue.xxxxx.us-east-1.cs.amazonlightsail.com \
-AUTH_TOKEN=your-secret-token \
-docker-compose up worker ollama
-```
-
-### Lightsail Configuration
-
-Edit `lightsail-deploy.json` to customize:
-
-| Field | Description |
-|-------|-------------|
-| `serviceName` | Lightsail service name |
-| `environment.AUTH_TOKEN` | API authentication token |
-| `publicEndpoint.healthCheck` | Health check settings |

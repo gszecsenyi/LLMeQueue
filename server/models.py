@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional, List, Any
+from pydantic import BaseModel, Field
+from typing import Optional, List, Any, Union
 
 
 # Embedding models
@@ -18,7 +18,7 @@ class OpenAIEmbeddingResponse(BaseModel):
 
 class OpenAIEmbeddingRequest(BaseModel):
     input: str  # text to embed
-    model: Optional[str] = None  # optional, uses server default
+    model: str  # Remove default value
 
 
 # Chat completion models
@@ -29,11 +29,11 @@ class ChatMessage(BaseModel):
 
 
 class ChatCompletionRequest(BaseModel):
-    model: Optional[str] = None
     messages: List[ChatMessage]
-    temperature: Optional[float] = 0.7
-    max_tokens: Optional[int] = None
-    stream: Optional[bool] = False
+    model: str  # Remove default value
+    temperature: Optional[float] = Field(default=0.7, ge=0, le=2)
+    max_tokens: Optional[int] = Field(default=None, ge=1)
+    wait_seconds: int = Field(default=180, ge=0, le=300)
 
 
 class ChatChoice(BaseModel):

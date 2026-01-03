@@ -82,7 +82,7 @@ async def submit_request(session, url, headers, task_num, task_type="embedding")
     question = random.choice(TEST_QUESTIONS)
     
     if task_type == "embedding":
-        payload = {"input": question}
+        payload = {"input": question, "model": "nomic-embed-text"}
     else:  # chat
         payload = {
             "model": "llama3.2:3b",
