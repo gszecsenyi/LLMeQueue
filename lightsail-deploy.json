@@ -2,7 +2,7 @@
   "serviceName": "llmequeue",
   "containers": {
     "server": {
-      "image": "llmequeue-server",
+      "image": ":llmequeue.server.3",
       "ports": {
         "8000": "HTTP"
       },

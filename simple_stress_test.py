@@ -11,18 +11,83 @@ import asyncio
 import aiohttp
 import time
 import argparse
+import random
+
+
+# Test questions dataset - randomly selected for each request
+TEST_QUESTIONS = [
+    "What is the meaning of life?",
+    "How does machine learning work?",
+    "Explain quantum computing in simple terms",
+    "What are the benefits of renewable energy?",
+    "How do neural networks learn patterns?",
+    "What is the difference between AI and ML?",
+    "Explain the concept of blockchain technology",
+    "How does photosynthesis work in plants?",
+    "What causes climate change?",
+    "Describe the theory of relativity",
+    "How do vaccines work in the human body?",
+    "What is the purpose of DNA in living organisms?",
+    "Explain how the internet works",
+    "What are the main principles of democracy?",
+    "How does cryptocurrency mining work?",
+    "What is natural language processing?",
+    "Explain the water cycle on Earth",
+    "How do black holes form in space?",
+    "What is the greenhouse effect?",
+    "Describe how a computer processor works",
+    "What are the key components of a healthy diet?",
+    "How does memory work in the human brain?",
+    "Explain the concept of supply and demand",
+    "What is the difference between weather and climate?",
+    "How do antibiotics fight bacterial infections?",
+    "What is artificial general intelligence?",
+    "Explain the concept of evolution",
+    "How does GPS technology work?",
+    "What are the different types of clouds?",
+    "Describe the process of nuclear fusion",
+    "How do solar panels generate electricity?",
+    "What is the importance of biodiversity?",
+    "Explain how language models are trained",
+    "What causes earthquakes to occur?",
+    "How does the human immune system work?",
+    "What is the difference between RNA and DNA?",
+    "Explain the concept of entropy in physics",
+    "How do ocean currents affect climate?",
+    "What is the role of mitochondria in cells?",
+    "Describe how satellites stay in orbit",
+    "What are the different layers of the atmosphere?",
+    "How does fiber optic communication work?",
+    "What is the carbon cycle in nature?",
+    "Explain the concept of machine vision",
+    "How do magnets work at the atomic level?",
+    "What is the difference between weather forecasting and climate modeling?",
+    "Describe the process of protein synthesis",
+    "How does radar technology detect objects?",
+    "What are the main causes of deforestation?",
+    "Explain the concept of dark matter and dark energy",
+    "How do electric motors convert energy?",
+    "What is the nitrogen cycle in ecosystems?",
+    "Describe how holograms are created",
+    "What are the different states of matter?",
+    "How does wireless charging technology work?",
+]
 
 
 async def submit_request(session, url, headers, task_num, task_type="embedding"):
     """Submit a single request and return response."""
     start = time.time()
     
+    # Select a random question from the test set
+    question = random.choice(TEST_QUESTIONS)
+    
     if task_type == "embedding":
-        payload = {"input": f"Test {task_num}"}
+        payload = {"input": question}
     else:  # chat
         payload = {
+            "model": "llama3.2:3b",
             "messages": [
-                {"role": "user", "content": f"Say hello briefly (test message {task_num})"}
+                {"role": "user", "content": question}
             ]
         }
     

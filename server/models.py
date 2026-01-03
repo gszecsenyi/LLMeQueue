@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Any
 
 
 # Embedding models
@@ -58,7 +58,7 @@ class ChatCompletionResponse(BaseModel):
 
 
 class WorkerCompleteRequest(BaseModel):
-    result: dict  # Generic result field for any task type
+    result: Any  # Generic result field for any task type (can be dict, list, etc.)
 
 
 class WorkerFailRequest(BaseModel):
