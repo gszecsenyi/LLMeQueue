@@ -84,6 +84,8 @@ response = client.embeddings.create(
 embedding = response.data[0].embedding
 
 # Optional: Specify embedding dimensions (if model supports it)
+# Note: Most Ollama models have fixed dimensions and will ignore this parameter.
+# For example, nomic-embed-text always outputs 768 dimensions.
 response = client.embeddings.create(
     input="The quick brown fox jumps over the lazy dog",
     model="nomic-embed-text",
@@ -99,6 +101,8 @@ response = client.embeddings.create(
   "model": "nomic-embed-text"
 }
 ```
+
+**Note on dimensions parameter:** While the API accepts the `dimensions` parameter for OpenAI compatibility, most Ollama embedding models have fixed output dimensions and will ignore this parameter. For example, `nomic-embed-text` always returns 768-dimensional embeddings regardless of the dimensions value.
 
 The server waits up to 30 seconds for the result. If processing takes longer, it returns a task ID for polling.
 
@@ -172,7 +176,7 @@ All endpoints require `Authorization: Bearer your-secret-token` header.
 |-------|------|---------|-------------|
 | `input` | string | required | Text to embed |
 | `model` | string | `nomic-embed-text` | Model name (optional) |
-| `dimensions` | integer | null | Embedding dimension size (optional, must be positive) |
+| `dimensions` | integer | null | Embedding dimension size (optional, must be positive). **Note:** Most Ollama models have fixed dimensions and ignore this parameter. |
 
 `POST /v1/chat/completions`
 
