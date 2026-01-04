@@ -83,13 +83,12 @@ response = client.embeddings.create(
 
 embedding = response.data[0].embedding
 
-# Optional: Specify embedding dimensions (if model supports it)
-# Note: Most Ollama models have fixed dimensions and will ignore this parameter.
-# For example, nomic-embed-text always outputs 768 dimensions.
+# Optional: Specify embedding dimensions (requires Ollama v0.11.11+)
+# Works with models that support dynamic dimensions (e.g., Qwen3 Embedding with MRL)
 response = client.embeddings.create(
     input="The quick brown fox jumps over the lazy dog",
     model="nomic-embed-text",
-    dimensions=768
+    dimensions=512  # Some models support custom dimensions
 )
 ```
 
@@ -102,7 +101,10 @@ response = client.embeddings.create(
 }
 ```
 
-**Note on dimensions parameter:** While the API accepts the `dimensions` parameter for OpenAI compatibility, most Ollama embedding models have fixed output dimensions and will ignore this parameter. For example, `nomic-embed-text` always returns 768-dimensional embeddings regardless of the dimensions value.
+**Note on dimensions parameter:** The `dimensions` parameter is supported in Ollama v0.11.11 and later. However, model support varies:
+- **Models with MRL (Matryoshka Representation Learning)** like Qwen3 Embedding support dynamic dimensions
+- **Fixed-dimension models** like `nomic-embed-text` (768) and `all-minilm` (384) will use their default dimensions regardless of this parameter
+- Check your model's documentation to see if it supports custom dimensions
 
 The server waits up to 30 seconds for the result. If processing takes longer, it returns a task ID for polling.
 
@@ -176,7 +178,7 @@ All endpoints require `Authorization: Bearer your-secret-token` header.
 |-------|------|---------|-------------|
 | `input` | string | required | Text to embed |
 | `model` | string | `nomic-embed-text` | Model name (optional) |
-| `dimensions` | integer | null | Embedding dimension size (optional, must be positive). **Note:** Most Ollama models have fixed dimensions and ignore this parameter. |
+| `dimensions` | integer | null | Embedding dimension size (optional, must be positive). Requires Ollama v0.11.11+. Support varies by model. |
 
 `POST /v1/chat/completions`
 
