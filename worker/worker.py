@@ -50,9 +50,10 @@ def process_embedding_task(task_id: str, payload: dict):
     if not isinstance(text, str):
         raise ValueError("Embedding task payload must include a 'text' field of type string.")
     model = payload.get("model")
+    dimensions = payload.get("dimensions")
     print(f"[embedding] {task_id}: {text[:50]}...")
 
-    embedding = get_embedding(text, model)
+    embedding = get_embedding(text, model, dimensions)
     complete_task(task_id, embedding)
     print(f"[embedding] {task_id} completed (dim: {len(embedding)})")
 

@@ -19,6 +19,7 @@ class OpenAIEmbeddingResponse(BaseModel):
 class OpenAIEmbeddingRequest(BaseModel):
     input: str  # text to embed
     model: str  # Remove default value
+    dimensions: Optional[int] = None  # Optional embedding dimension size
 
 
 # Chat completion models

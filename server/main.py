@@ -164,6 +164,8 @@ async def openai_embeddings(request: OpenAIEmbeddingRequest, token: str = Depend
         {"id": "task-id"} - poll GET /tasks/{id} for result
     """
     payload = {"text": request.input, "model": request.model}
+    if request.dimensions is not None:
+        payload["dimensions"] = request.dimensions
     task_id = await database.create_task("embedding", payload)
     max_wait = 30  # Fixed wait time for embeddings
     deadline = time.time() + max_wait
