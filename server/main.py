@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from typing import Union
 
 import database
-from config import AUTH_TOKEN, EMBEDDING_MODEL, CHAT_MODEL
+from config import AUTH_TOKEN
 from models import (
     WorkerFailRequest,
     EmbeddingData,
@@ -163,7 +163,7 @@ async def openai_embeddings(request: OpenAIEmbeddingRequest, token: str = Depend
     On timeout:
         {"id": "task-id"} - poll GET /tasks/{id} for result
     """
-    payload = {"text": request.input, "model": request.model or EMBEDDING_MODEL}
+    payload = {"text": request.input, "model": request.model}
     task_id = await database.create_task("embedding", payload)
     max_wait = 30  # Fixed wait time for embeddings
     deadline = time.time() + max_wait
@@ -176,7 +176,7 @@ async def openai_embeddings(request: OpenAIEmbeddingRequest, token: str = Depend
             await database.delete_task(task_id)
             return OpenAIEmbeddingResponse(
                 data=[EmbeddingData(embedding=embedding)],
-                model=request.model or EMBEDDING_MODEL
+                model=request.model
             )
         elif task["status"] == "failed":
             error_msg = task["error"] or "Unknown error"
@@ -207,7 +207,7 @@ async def chat_completions(request: ChatCompletionRequest, token: str = Depends(
 
     payload = {
         "messages": [{"role": m.role, "content": m.content} for m in request.messages],
-        "model": request.model or CHAT_MODEL,
+        "model": request.model,
         "temperature": request.temperature,
         "max_tokens": request.max_tokens,
     }
@@ -224,7 +224,7 @@ async def chat_completions(request: ChatCompletionRequest, token: str = Depends(
             return ChatCompletionResponse(
                 id=task_id,
                 created=int(time.time()),
-                model=request.model or CHAT_MODEL,
+                model=request.model,
                 choices=[ChatChoice(
                     message=ChatMessage(role="assistant", content=result["content"]),
                     finish_reason=result.get("finish_reason", "stop")
