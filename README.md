@@ -82,6 +82,14 @@ response = client.embeddings.create(
 )
 
 embedding = response.data[0].embedding
+
+# Optional: Specify embedding dimensions (requires Ollama v0.11.11+)
+# Example with a model that supports dynamic dimensions
+response = client.embeddings.create(
+    input="The quick brown fox jumps over the lazy dog",
+    model="qwen3-embedding",  # Use a model with MRL support
+    dimensions=512  # Custom dimension size
+)
 ```
 
 **Response (OpenAI format):**
@@ -92,6 +100,11 @@ embedding = response.data[0].embedding
   "model": "nomic-embed-text"
 }
 ```
+
+**Note on dimensions parameter:** The `dimensions` parameter is supported in Ollama v0.11.11 and later. However, model support varies:
+- **Models with MRL (Matryoshka Representation Learning)** like Qwen3 Embedding support dynamic dimensions
+- **Fixed-dimension models** like `nomic-embed-text` (768) and `all-minilm` (384) will use their default dimensions regardless of this parameter
+- Check your model's documentation to see if it supports custom dimensions
 
 The server waits up to 30 seconds for the result. If processing takes longer, it returns a task ID for polling.
 
@@ -165,6 +178,7 @@ All endpoints require `Authorization: Bearer your-secret-token` header.
 |-------|------|---------|-------------|
 | `input` | string | required | Text to embed |
 | `model` | string | `nomic-embed-text` | Model name (optional) |
+| `dimensions` | integer | null | Embedding dimension size (optional, must be positive). Requires Ollama v0.11.11+. Support varies by model. |
 
 `POST /v1/chat/completions`
 
