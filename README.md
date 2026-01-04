@@ -82,6 +82,13 @@ response = client.embeddings.create(
 )
 
 embedding = response.data[0].embedding
+
+# Optional: Specify embedding dimensions (if model supports it)
+response = client.embeddings.create(
+    input="The quick brown fox jumps over the lazy dog",
+    model="nomic-embed-text",
+    dimensions=768
+)
 ```
 
 **Response (OpenAI format):**
@@ -165,6 +172,7 @@ All endpoints require `Authorization: Bearer your-secret-token` header.
 |-------|------|---------|-------------|
 | `input` | string | required | Text to embed |
 | `model` | string | `nomic-embed-text` | Model name (optional) |
+| `dimensions` | integer | null | Embedding dimension size (optional, must be positive) |
 
 `POST /v1/chat/completions`
 
