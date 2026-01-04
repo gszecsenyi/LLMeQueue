@@ -84,11 +84,11 @@ response = client.embeddings.create(
 embedding = response.data[0].embedding
 
 # Optional: Specify embedding dimensions (requires Ollama v0.11.11+)
-# Works with models that support dynamic dimensions (e.g., Qwen3 Embedding with MRL)
+# Example with a model that supports dynamic dimensions
 response = client.embeddings.create(
     input="The quick brown fox jumps over the lazy dog",
-    model="nomic-embed-text",
-    dimensions=512  # Some models support custom dimensions
+    model="qwen3-embedding",  # Use a model with MRL support
+    dimensions=512  # Custom dimension size
 )
 ```
 
